@@ -1,9 +1,9 @@
 // Self-contained Red Light / Green Light game.
-// Tap the big button to move. Only counts on GREEN. On RED, taps freeze you briefly.
+// Tap the big button to move. Only counts on GREEN. On RED, taps send you back to the start.
 
 let root: HTMLElement | null = null;
 let switchTimer: number | null = null;
-let freezeTimer: number | null = null;
+let penaltyTimer: number | null = null;
 
 export function mount(container: HTMLElement): void {
   root = container;
@@ -12,7 +12,7 @@ export function mount(container: HTMLElement): void {
 
 export function unmount(): void {
   if (switchTimer !== null) { clearTimeout(switchTimer); switchTimer = null; }
-  if (freezeTimer !== null) { clearTimeout(freezeTimer); freezeTimer = null; }
+  if (penaltyTimer !== null) { clearTimeout(penaltyTimer); penaltyTimer = null; }
   if (root) { root.innerHTML = ''; root = null; }
 }
 
@@ -51,7 +51,6 @@ function render(): void {
   root.appendChild(reset);
 
   let isGreen = true;
-  let frozen = false;
   let progress = 0; // 0..1
   let won = false;
 
@@ -75,7 +74,7 @@ function render(): void {
   window.addEventListener('resize', positionRunner);
 
   tap.addEventListener('click', () => {
-    if (won || frozen) return;
+    if (won) return;
     if (isGreen) {
       progress = Math.min(1, progress + 0.08);
       positionRunner();
@@ -89,16 +88,16 @@ function render(): void {
         if (switchTimer !== null) { clearTimeout(switchTimer); switchTimer = null; }
       }
     } else {
-      // Red light: brief freeze + wiggle feedback, no progress lost (toddler-kind).
-      frozen = true;
-      const original = tap.textContent;
-      tap.textContent = '❄️ Freeze!';
-      if (freezeTimer !== null) clearTimeout(freezeTimer);
-      freezeTimer = window.setTimeout(() => {
-        frozen = false;
+      // Red light: go back to the start!
+      progress = 0;
+      positionRunner();
+      const original = '👆 TAP TO GO';
+      tap.textContent = '⛔ Back to start!';
+      if (penaltyTimer !== null) clearTimeout(penaltyTimer);
+      penaltyTimer = window.setTimeout(() => {
         tap.textContent = original;
-        freezeTimer = null;
-      }, 700);
+        penaltyTimer = null;
+      }, 900);
     }
   });
 }
