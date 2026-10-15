@@ -1,9 +1,11 @@
 // Self-contained Red Light / Green Light game.
-// Tap the big button to move. Only counts on GREEN. On RED, taps send you back to the start.
+// Tap the big button (or press Space) to move. Only counts on GREEN. On RED, taps send you back to the start.
 
 let root: HTMLElement | null = null;
 let switchTimer: number | null = null;
 let penaltyTimer: number | null = null;
+// Window listeners added by the current round; removed on unmount and before re-rendering.
+let removeListeners: (() => void) | null = null;
 
 export function mount(container: HTMLElement): void {
   root = container;
@@ -13,11 +15,16 @@ export function mount(container: HTMLElement): void {
 export function unmount(): void {
   if (switchTimer !== null) { clearTimeout(switchTimer); switchTimer = null; }
   if (penaltyTimer !== null) { clearTimeout(penaltyTimer); penaltyTimer = null; }
+  if (removeListeners) { removeListeners(); removeListeners = null; }
   if (root) { root.innerHTML = ''; root = null; }
 }
 
 function render(): void {
   if (!root) return;
+  // "Play Again" re-renders: stop the previous round's timers and listeners.
+  if (switchTimer !== null) { clearTimeout(switchTimer); switchTimer = null; }
+  if (penaltyTimer !== null) { clearTimeout(penaltyTimer); penaltyTimer = null; }
+  if (removeListeners) { removeListeners(); removeListeners = null; }
   root.innerHTML = '';
 
   const light = document.createElement('div');
@@ -38,16 +45,23 @@ function render(): void {
   root.appendChild(track);
 
   const tap = document.createElement('button');
+  tap.type = 'button';
   tap.className = 'rl-tap';
   tap.textContent = '👆 TAP TO GO';
   root.appendChild(tap);
 
   const reset = document.createElement('button');
+  reset.type = 'button';
   reset.className = 'big';
   reset.style.marginTop = '16px';
   reset.style.alignSelf = 'center';
   reset.textContent = '🔄 Play Again';
-  reset.addEventListener('click', render);
+  reset.addEventListener('click', () => {
+    render();
+    // Keyboard focus would otherwise drop to <body>. Put it on the new tap
+    // button so the next Space is a tap, not another restart.
+    root?.querySelector<HTMLButtonElement>('.rl-tap')?.focus();
+  });
   root.appendChild(reset);
 
   let isGreen = true;
@@ -71,9 +85,30 @@ function render(): void {
     runner.style.left = `${Math.max(0, progress * trackWidth)}px`;
   }
   requestAnimationFrame(positionRunner);
-  window.addEventListener('resize', positionRunner);
 
-  tap.addEventListener('click', () => {
+  // Space is the tap, wherever focus is. Other buttons (Back, Play Again) keep
+  // their normal Space behavior, and the tap button already turns Space into a
+  // click by itself, so skip those to avoid double taps.
+  function onKeyDown(e: KeyboardEvent): void {
+    if (e.code !== 'Space' && e.key !== ' ') return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('button, input, textarea, select, a[href], [contenteditable]')) return;
+    e.preventDefault(); // don't scroll the page
+    if (e.repeat) return; // holding Space is not a stream of taps
+    onTap();
+  }
+
+  window.addEventListener('resize', positionRunner);
+  window.addEventListener('keydown', onKeyDown);
+  removeListeners = () => {
+    window.removeEventListener('resize', positionRunner);
+    window.removeEventListener('keydown', onKeyDown);
+  };
+
+  tap.addEventListener('click', onTap);
+
+  function onTap(): void {
     if (won) return;
     if (isGreen) {
       progress = Math.min(1, progress + 0.08);
@@ -99,5 +134,5 @@ function render(): void {
         penaltyTimer = null;
       }, 900);
     }
-  });
+  }
 }
