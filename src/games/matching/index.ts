@@ -6,7 +6,7 @@ const FACES = ['🐶', '🐱', '🐰', '🐼', '🦊', '🐸'];
 let root: HTMLElement | null = null;
 let lockTimer: number | null = null;
 
-interface Card { face: string; el: HTMLElement; matched: boolean; flipped: boolean; }
+interface Card { face: string; el: HTMLButtonElement; matched: boolean; flipped: boolean; }
 
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
@@ -47,9 +47,12 @@ function render(): void {
   let locked = false;
 
   for (const face of deck) {
-    const el = document.createElement('div');
+    // Real buttons, so cards are reachable with Tab and flip with Enter/Space.
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'match-card';
     el.textContent = '';
+    el.setAttribute('aria-label', 'Hidden card');
     const card: Card = { face, el, matched: false, flipped: false };
     cards.push(card);
     el.addEventListener('click', () => onPick(card));
@@ -68,6 +71,7 @@ function render(): void {
     card.flipped = show;
     card.el.textContent = show ? card.face : '';
     card.el.classList.toggle('flipped', show);
+    card.el.setAttribute('aria-label', show ? card.face : 'Hidden card');
   }
 
   function onPick(card: Card): void {

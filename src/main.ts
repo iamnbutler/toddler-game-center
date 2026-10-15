@@ -4,6 +4,7 @@ const app = document.getElementById('app')!;
 let activeGame: GameEntry | null = null;
 
 function renderHub(): void {
+  const previousGame = activeGame;
   cleanupActive();
   app.innerHTML = '';
 
@@ -16,15 +17,21 @@ function renderHub(): void {
 
   const grid = document.createElement('div');
   grid.className = 'tile-grid';
+  let tileToFocus: HTMLButtonElement | null = null;
   for (const game of games) {
     const tile = document.createElement('button');
+    tile.type = 'button';
     tile.className = 'tile';
     tile.style.background = game.color;
     tile.innerHTML = `<div class="emoji">${game.emoji}</div><div>${game.title}</div>`;
     tile.addEventListener('click', () => openGame(game));
     grid.appendChild(tile);
+    // Coming back from a game: return keyboard focus to that game's tile
+    // instead of dropping it on <body>.
+    if (game === previousGame) tileToFocus = tile;
   }
   app.appendChild(grid);
+  tileToFocus?.focus();
 }
 
 function openGame(game: GameEntry): void {
@@ -34,6 +41,7 @@ function openGame(game: GameEntry): void {
   const header = document.createElement('header');
   header.className = 'hub-header';
   const back = document.createElement('button');
+  back.type = 'button';
   back.className = 'big';
   back.textContent = '← Back';
   back.addEventListener('click', renderHub);

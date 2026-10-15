@@ -83,3 +83,14 @@ button.big:active { transform: translateY(2px); }
   border: 6px solid var(--ink); background: #ffe066; cursor: pointer; font-weight: bold;
 }
 .rl-tap:active { transform: translateY(2px); }
+
+/* Keyboard focus: a thick, high-contrast ring on anything reachable with Tab.
+   :focus-visible keeps it off for mouse/touch taps. */
+:root { --focus: #1a4fd6; }
+button:focus-visible {
+  outline: 6px solid var(--focus);
+  outline-offset: 4px;
+}
+
+/* Matching cards are <button>s; drop the browser's default button styling. */
+.match-card { padding: 0; font-family: inherit; color: var(--ink); }
