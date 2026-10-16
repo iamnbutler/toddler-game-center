@@ -1,68 +1,84 @@
 # Toddler Game Center
 
-A tiny hub of learning games for toddlers, built with TypeScript + Vite.
+A tiny hub of learning games for toddlers. Native SwiftUI app for **macOS** and **iPadOS**, from a single app target.
 
 Included games:
-- 🐻 **Matching** — flip cards and find pairs.
-- 🚦 **Red Light, Green Light** — tap to move on green, freeze on red.
+- 🐻 **Matching**: flip cards and find pairs.
+- 🚦 **Red Light, Green Light**: tap to move on green, freeze on red.
+
+## Requirements
+
+- Xcode 16 or later (Swift 6)
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
+- Deployment targets: macOS 14, iPadOS 17
 
 ## Run it
 
-```bash
-npm install
-npm run dev
-```
-
-Then open the URL Vite prints (usually http://localhost:5173).
-
-To build a static bundle:
+The Xcode project is generated from `project.yml` and isn't checked in:
 
 ```bash
-npm run build
-npm run preview
+xcodegen generate
+open ToddlerGameCenter.xcodeproj
 ```
+
+Pick the **ToddlerGameCenter** scheme, choose **My Mac** or an iPad simulator, and run. Rerun `xcodegen generate` after adding or removing files in `App/`. Files in `GameCenterKit/` are picked up automatically.
+
+Run the game-logic tests without Xcode:
+
+```bash
+swift test --package-path GameCenterKit
+```
+
+From the command line:
+
+```bash
+xcodebuild build -project ToddlerGameCenter.xcodeproj -scheme ToddlerGameCenter \
+  -destination 'platform=macOS'
+xcodebuild build -project ToddlerGameCenter.xcodeproj -scheme ToddlerGameCenter \
+  -destination 'generic/platform=iOS Simulator'
+```
+
+## Playing with a keyboard
+
+- **Tab** moves between buttons when Full Keyboard Access is on (System Settings → Keyboard on macOS, Settings → Accessibility → Keyboards on iPad). **Space** presses the focused button.
+- **Escape** goes back to the hub from any game.
+- In Red Light, Green Light, **Space** taps the big button wherever focus is.
 
 ## Adding a new game
 
-Each game is self-contained and exposes a simple lifecycle:
+Each game is a SwiftUI view, ideally backed by a plain value type that holds the rules, so the rules can be unit tested without UI:
 
-```ts
-export function mount(container: HTMLElement): void { /* build UI, wire events */ }
-export function unmount(): void { /* clean up timers/listeners */ }
+1. Create `GameCenterKit/Sources/GameCenterKit/Games/<YourGame>/` with:
+   - `YourGame.swift`: a `struct` with the rules (no timers, no SwiftUI).
+   - `YourGameView.swift`: the view. Keep the game in `@State` and do timed work in `.task { }`, so it stops when the player leaves the game.
+2. Add an entry to `GameRegistry.games` in `Hub/GameRegistry.swift`:
+
+```swift
+GameEntry(id: "your-game", title: "Your Game", emoji: "🎈", color: Color(hex: 0xFFCC66)) {
+    YourGameView()
+}
 ```
 
-Steps:
+3. Add tests in `GameCenterKit/Tests/GameCenterKitTests/`.
 
-1. Create `src/games/<yourGame>/index.ts` exporting `mount` and `unmount`.
-2. Add an entry to `src/games/registry.ts`:
-
-```ts
-import * as yourGame from './yourGame';
-
-export const games: GameEntry[] = [
-  // ...existing games
-  {
-    id: 'your-game',
-    title: 'Your Game',
-    emoji: '🎈',
-    color: '#ffcc66',
-    mount: yourGame.mount,
-    unmount: yourGame.unmount,
-  },
-];
-```
-
-That's it — the hub will render a new tile automatically.
+The hub renders a tile for each entry. Each visit to a game gets a fresh view, so every visit starts a new round.
 
 ## Project layout
 
 ```
-index.html
-src/
-  main.ts                 # hub: renders tiles, mounts/unmounts games
-  styles.css              # big buttons, high-contrast toddler-friendly styling
-  games/
-    registry.ts           # single source of truth for available games
-    matching/index.ts     # self-contained matching game
-    redLightGreenLight/index.ts  # self-contained red/green light game
+project.yml                      # XcodeGen spec: one app target for macOS + iPadOS
+App/
+  ToddlerGameCenterApp.swift     # @main entry point; hosts GameCenterView
+GameCenterKit/                   # Swift package with the games, hub, and tests
+  Package.swift
+  Sources/GameCenterKit/
+    Hub/
+      GameCenterView.swift       # hub: tile grid, header with Back button
+      GameRegistry.swift         # single source of truth for available games
+    Shared/
+      Theme.swift                # colors, fonts, chunky toddler-friendly button style
+    Games/
+      Matching/                  # MatchingGame (rules) + MatchingGameView
+      RedLightGreenLight/        # RedLightGame (rules) + RedLightGameView
+  Tests/GameCenterKitTests/      # Swift Testing tests for the game rules
 ```

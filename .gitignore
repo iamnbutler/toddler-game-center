@@ -1,6 +1,11 @@
-node_modules/
-dist/
 .env
 .env.*
 .DS_Store
 .lane/trees/
+
+# Xcode (project is generated from project.yml)
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/

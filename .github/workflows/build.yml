@@ -7,12 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - run: npm run build
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Test game logic
+        run: swift test --package-path GameCenterKit
+      - name: Generate Xcode project
+        run: |
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+          xcodegen generate
+      - name: Build for macOS
+        run: >
+          xcodebuild build
+          -project ToddlerGameCenter.xcodeproj
+          -scheme ToddlerGameCenter
+          -destination 'generic/platform=macOS'
+          CODE_SIGNING_ALLOWED=NO
+      - name: Build for iPadOS Simulator
+        run: >
+          xcodebuild build
+          -project ToddlerGameCenter.xcodeproj
+          -scheme ToddlerGameCenter
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
