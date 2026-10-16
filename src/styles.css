@@ -94,3 +94,40 @@ button:focus-visible {
 
 /* Matching cards are <button>s; drop the browser's default button styling. */
 .match-card { padding: 0; font-family: inherit; color: var(--ink); }
+
+/* Balloon Pop */
+.bp-status { text-align: center; font-size: 26px; font-weight: bold; margin: 0 0 12px; }
+.bp-sky {
+  position: relative; flex: 1; min-height: 420px; overflow: hidden;
+  border: 6px solid var(--ink); border-radius: 24px;
+  background: linear-gradient(#bde4ff, #e9f6ff);
+  touch-action: manipulation; user-select: none;
+}
+/* Keep the size in sync with BALLOON_WIDTH / BALLOON_HEIGHT in balloonPop/index.ts. */
+.bp-balloon {
+  position: absolute; left: 0; top: 0;
+  width: 96px; height: 120px; padding: 0; cursor: pointer;
+  border: 4px solid rgba(0, 0, 0, 0.25);
+  border-radius: 50% 50% 50% 50% / 42% 42% 58% 58%;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.7) 0 12%, transparent 13%), var(--balloon);
+  will-change: transform;
+}
+/* The knot and string. */
+.bp-balloon::before {
+  content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+  border: 7px solid transparent; border-bottom-color: var(--balloon); border-top: 0;
+}
+.bp-balloon::after {
+  content: ''; position: absolute; left: 50%; top: 100%;
+  width: 2px; height: 48px; background: #556;
+}
+.bp-burst {
+  position: absolute; width: 96px; height: 120px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 72px; pointer-events: none;
+  animation: bp-burst 0.5s ease-out forwards;
+}
+@keyframes bp-burst {
+  from { transform: scale(0.6); opacity: 1; }
+  to { transform: scale(1.6); opacity: 0; }
+}

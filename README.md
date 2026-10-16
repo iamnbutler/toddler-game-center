@@ -5,6 +5,7 @@ A tiny hub of learning games for toddlers, built with TypeScript + Vite.
 Included games:
 - 🐻 **Matching** — flip cards and find pairs.
 - 🚦 **Red Light, Green Light** — tap to move on green, freeze on red.
+- 🎈 **Balloon Pop** — tap floating balloons (or press Space) to pop them.
 
 ## Run it
 
@@ -65,4 +66,5 @@ src/
     registry.ts           # single source of truth for available games
     matching/index.ts     # self-contained matching game
     redLightGreenLight/index.ts  # self-contained red/green light game
+    balloonPop/index.ts   # self-contained balloon popping game
 ```

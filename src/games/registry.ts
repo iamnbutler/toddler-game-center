@@ -1,5 +1,6 @@
 import * as matching from './matching';
 import * as redLightGreenLight from './redLightGreenLight';
+import * as balloonPop from './balloonPop';
 
 export interface GameEntry {
   id: string;
@@ -26,5 +27,13 @@ export const games: GameEntry[] = [
     color: '#a0e7a0',
     mount: redLightGreenLight.mount,
     unmount: redLightGreenLight.unmount,
+  },
+  {
+    id: 'balloon-pop',
+    title: 'Balloon Pop',
+    emoji: '🎈',
+    color: '#bde4ff',
+    mount: balloonPop.mount,
+    unmount: balloonPop.unmount,
   },
 ];
