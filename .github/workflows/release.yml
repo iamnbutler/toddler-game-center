@@ -1,0 +1,87 @@
+name: Release
+
+# Builds a signed, notarized macOS app. Tags like v0.1.0 publish a GitHub release;
+# manual runs and PRs that touch signing upload the zip as a workflow artifact.
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - ".github/workflows/release.yml"
+      - "scripts/sign-macos.sh"
+      - "App/ToddlerGameCenter.entitlements"
+      - "project.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew list xcodegen >/dev/null 2>&1 || brew install xcodegen
+
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(uuidgen)"
+          cert="$RUNNER_TEMP/DeveloperID.p12"
+
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          printf '%s' "$CERTIFICATE_P12" | base64 --decode > "$cert"
+          security import "$cert" -f pkcs12 -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm -f "$cert"
+
+          identity=$(security find-identity -v -p codesigning "$keychain" | grep "Developer ID Application" | head -1 | awk '{print $2}')
+          if [ -z "$identity" ]; then
+            echo "::error::Developer ID certificate not found in keychain"
+            exit 1
+          fi
+          echo "KEYCHAIN_PATH=$keychain" >> "$GITHUB_ENV"
+          echo "DEVELOPER_ID=$identity" >> "$GITHUB_ENV"
+
+      - name: Build, sign, and notarize
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        run: scripts/sign-macos.sh
+
+      - name: Package
+        id: package
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          [[ "$GITHUB_REF_TYPE" == "tag" ]] || version="$(git rev-parse --short HEAD)"
+          zip="ToddlerGameCenter-${version}-macOS.zip"
+          ditto -c -k --keepParent ".build/DerivedData/Build/Products/Release/Toddler Game Center.app" "$zip"
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ToddlerGameCenter-macOS
+          path: ${{ steps.package.outputs.zip }}
+          if-no-files-found: error
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "${{ steps.package.outputs.zip }}" --title "$GITHUB_REF_NAME" --generate-notes
+
+      - name: Clean up keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
