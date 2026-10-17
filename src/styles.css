@@ -53,11 +53,13 @@ button.big:active { transform: translateY(2px); }
 .match-card {
   aspect-ratio: 1; border-radius: 20px; border: 4px solid var(--ink);
   background: var(--accent); display: flex; align-items: center; justify-content: center;
-  font-size: 56px; cursor: pointer; user-select: none;
+  font-size: min(56px, 12vw); cursor: pointer; user-select: none;
+  min-width: 56px; min-height: 56px;
 }
 .match-card.flipped { background: #fff; }
 .match-card.matched { background: #cfe9c8; border-color: var(--green); cursor: default; }
 .match-status { text-align: center; font-size: 22px; margin: 16px 0; }
+.match-sizes { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
 
 /* Red / Green Light */
 .rl-light {

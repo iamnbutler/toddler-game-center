@@ -1,7 +1,15 @@
 // Self-contained matching game.
-// Toddler-friendly: 6 pairs, generous card size, gentle feedback.
+// Toddler-friendly: pick a board size, generous card size, gentle feedback.
 
 const FACES = ['🐶', '🐱', '🐰', '🐼', '🦊', '🐸'];
+
+interface BoardSize { label: string; cols: number; rows: number; }
+
+const SIZES: BoardSize[] = [
+  { label: '🐣 Easy', cols: 2, rows: 2 },
+  { label: '🐥 Medium', cols: 3, rows: 2 },
+  { label: '🦁 Hard', cols: 4, rows: 3 },
+];
 
 let root: HTMLElement | null = null;
 let lockTimer: number | null = null;
@@ -19,7 +27,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 export function mount(container: HTMLElement): void {
   root = container;
-  render();
+  renderPicker();
 }
 
 export function unmount(): void {
@@ -27,9 +35,34 @@ export function unmount(): void {
   if (root) { root.innerHTML = ''; root = null; }
 }
 
-function render(): void {
+function renderPicker(): void {
   if (!root) return;
+  if (lockTimer !== null) { clearTimeout(lockTimer); lockTimer = null; }
   root.innerHTML = '';
+
+  const status = document.createElement('div');
+  status.className = 'match-status';
+  status.textContent = 'How many cards? 🃏';
+  root.appendChild(status);
+
+  const picker = document.createElement('div');
+  picker.className = 'match-sizes';
+  for (const size of SIZES) {
+    const btn = document.createElement('button');
+    btn.className = 'big';
+    btn.textContent = `${size.label} (${size.cols}×${size.rows})`;
+    btn.addEventListener('click', () => render(size));
+    picker.appendChild(btn);
+  }
+  root.appendChild(picker);
+}
+
+function render(size: BoardSize): void {
+  if (!root) return;
+  if (lockTimer !== null) { clearTimeout(lockTimer); lockTimer = null; }
+  root.innerHTML = '';
+
+  const faces = FACES.slice(0, (size.cols * size.rows) / 2);
 
   const status = document.createElement('div');
   status.className = 'match-status';
@@ -38,9 +71,12 @@ function render(): void {
 
   const grid = document.createElement('div');
   grid.className = 'match-grid';
+  grid.style.gridTemplateColumns = `repeat(${size.cols}, 1fr)`;
+  // Cap width per column so small boards keep big cards without stretching.
+  grid.style.maxWidth = `${size.cols * 140}px`;
   root.appendChild(grid);
 
-  const deck = shuffle([...FACES, ...FACES]);
+  const deck = shuffle([...faces, ...faces]);
   const cards: Card[] = [];
   let firstPick: Card | null = null;
   let matchedCount = 0;
@@ -59,13 +95,19 @@ function render(): void {
     grid.appendChild(el);
   }
 
+  const controls = document.createElement('div');
+  controls.className = 'match-sizes';
+  controls.style.marginTop = '20px';
   const reset = document.createElement('button');
   reset.className = 'big';
-  reset.style.marginTop = '20px';
-  reset.style.alignSelf = 'center';
   reset.textContent = '🔄 New Game';
-  reset.addEventListener('click', render);
-  root.appendChild(reset);
+  reset.addEventListener('click', () => render(size));
+  const change = document.createElement('button');
+  change.className = 'big';
+  change.textContent = '🃏 Change Size';
+  change.addEventListener('click', renderPicker);
+  controls.append(reset, change);
+  root.appendChild(controls);
 
   function flip(card: Card, show: boolean): void {
     card.flipped = show;
@@ -87,8 +129,8 @@ function render(): void {
       card.el.classList.add('matched');
       firstPick = null;
       matchedCount++;
-      status.textContent = `Great job! ⭐ (${matchedCount}/${FACES.length})`;
-      if (matchedCount === FACES.length) {
+      status.textContent = `Great job! ⭐ (${matchedCount}/${faces.length})`;
+      if (matchedCount === faces.length) {
         status.textContent = 'You did it! 🎉🎉🎉';
       }
     } else {
