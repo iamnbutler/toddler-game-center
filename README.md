@@ -38,6 +38,29 @@ xcodebuild build -project ToddlerGameCenter.xcodeproj -scheme ToddlerGameCenter 
   -destination 'generic/platform=iOS Simulator'
 ```
 
+## Signed macOS build
+
+`scripts/sign-macos.sh` builds a Release app, signs it with a Developer ID (hardened runtime, secure timestamp, App Sandbox), and notarizes and staples it when App Store Connect API credentials are set. It follows the same flow as Ace's desktop releases.
+
+```bash
+scripts/sign-macos.sh --open                                      # sign with the keychain's Developer ID and launch
+op run --env-file scripts/signing.env -- scripts/sign-macos.sh    # sign + notarize using 1Password
+```
+
+`scripts/signing.env` holds only `op://` references to the "Ace desktop releases" item in the Dev vault. The output is `.build/DerivedData/Build/Products/Release/Toddler Game Center.app`.
+
+### Releases
+
+Pushing a tag like `v0.1.0` runs `.github/workflows/release.yml`. It imports the Developer ID certificate into a temporary keychain, runs `scripts/sign-macos.sh`, and publishes the notarized zip as a GitHub release. It reads these repository secrets, all copied from the 1Password item "Ace desktop releases":
+
+| Secret | 1Password field |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12` | `ACE_CERTIFICATE_P12` (base64 .p12) |
+| `MACOS_CERTIFICATE_PASSWORD` | `ACE_CERTIFICATE_PASSWORD` |
+| `APPLE_API_KEY_ID` | `ACE_NOTARY_KEY_ID` |
+| `APPLE_API_ISSUER` | `ACE_NOTARY_ISSUER` |
+| `APPLE_API_PRIVATE_KEY` | `ACE_NOTARY_PRIVATE_KEY` |
+
 ## Playing with a keyboard
 
 - **Tab** moves between buttons when Full Keyboard Access is on (System Settings → Keyboard on macOS, Settings → Accessibility → Keyboards on iPad). **Space** presses the focused button.
