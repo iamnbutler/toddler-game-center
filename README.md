@@ -5,6 +5,9 @@ A tiny hub of learning games for toddlers. Native SwiftUI app for **macOS**, **i
 Included games:
 - 🐻 **Matching**: flip cards and find pairs.
 - 🚦 **Red Light, Green Light**: tap to move on green, freeze on red.
+- 🎈 **Balloon Pop**: touch the balloons floating up the sky to pop them. Pop ten to win.
+- 🎨 **Colors**: find the color that matches the swatch, out of three.
+- 🔢 **Counting**: count the things (tap each one to number it), then tap how many.
 
 ## Requirements
 
@@ -66,6 +69,8 @@ Pushing a tag like `v0.1.0` runs `.github/workflows/release.yml`. It imports the
 - **Tab** moves between buttons when Full Keyboard Access is on (System Settings → Keyboard on macOS, Settings → Accessibility → Keyboards on iPad). **Space** presses the focused button.
 - **Escape** goes back to the hub from any game.
 - In Red Light, Green Light, **Space** taps the big button wherever focus is.
+- In Balloon Pop, **Space** pops the highest balloon.
+- In Counting, the number keys **1**–**5** answer.
 
 ## Adding a new game
 
@@ -100,8 +105,12 @@ GameCenterKit/                   # Swift package with the games, hub, and tests
       GameRegistry.swift         # single source of truth for available games
     Shared/
       Theme.swift                # colors, fonts, chunky toddler-friendly button style
+      Feedback.swift             # star progress row, wrong-answer shake, badges, Play Again
     Games/
       Matching/                  # MatchingGame (rules) + MatchingGameView
       RedLightGreenLight/        # RedLightGame (rules) + RedLightGameView
+      BalloonPop/                # BalloonPopGame (rules) + BalloonPopView
+      Colors/                    # ColorGame (rules) + ColorGameView
+      Counting/                  # CountingGame (rules) + CountingGameView
   Tests/GameCenterKitTests/      # Swift Testing tests for the game rules
 ```

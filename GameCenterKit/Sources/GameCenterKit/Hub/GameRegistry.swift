@@ -33,5 +33,14 @@ public enum GameRegistry {
         GameEntry(id: "red-light-green-light", title: "Red Light, Green Light", emoji: "🚦", color: Color(hex: 0xA0E7A0)) {
             RedLightGameView()
         },
+        GameEntry(id: "balloon-pop", title: "Balloon Pop", emoji: "🎈", color: Color(hex: 0xFFC6D9)) {
+            BalloonPopView()
+        },
+        GameEntry(id: "colors", title: "Colors", emoji: "🎨", color: Color(hex: 0xBDE0FE)) {
+            ColorGameView()
+        },
+        GameEntry(id: "counting", title: "Counting", emoji: "🔢", color: Color(hex: 0xE4C1F9)) {
+            CountingGameView()
+        },
     ]
 }
