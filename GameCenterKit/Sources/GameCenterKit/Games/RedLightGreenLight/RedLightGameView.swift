@@ -8,20 +8,22 @@ struct RedLightGameView: View {
     @State private var round = 0
     @State private var showingSentBack = false
     @FocusState private var stageFocused: Bool
+    #if os(iOS)
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    #endif
+
+    /// Short screens (iPhone in landscape) get a slimmer light and tighter spacing.
+    private var isShort: Bool {
+        #if os(iOS)
+        verticalSizeClass == .compact
+        #else
+        false
+        #endif
+    }
 
     var body: some View {
-        VStack(spacing: 24) {
-            light
-            track
-            tapButton
-            Button(action: playAgain) {
-                Text("🔄 Play Again").font(Theme.rounded(22, weight: .semibold)).padding(.horizontal, 20)
-            }
-            .chunkyButton()
-            Spacer(minLength: 0)
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        content
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         // Space is the tap, wherever focus is in the game. Buttons that have
         // keyboard focus handle Space themselves first, so there's no double tap.
         .focusable()
@@ -51,13 +53,39 @@ struct RedLightGameView: View {
         }
     }
 
+    private var stack: some View {
+        VStack(spacing: isShort ? 12 : 24) {
+            light
+            track
+            tapButton
+            Button(action: playAgain) {
+                Text("🔄 Play Again").font(Theme.rounded(22, weight: .semibold)).padding(.horizontal, 20)
+            }
+            .chunkyButton()
+        }
+        .padding(isShort ? 16 : 24)
+        .frame(maxWidth: .infinity)
+    }
+
+    /// Scrolls only when the screen is too short to fit the game (iPhone in landscape).
+    @ViewBuilder private var content: some View {
+        if isShort {
+            ScrollView { stack }
+        } else {
+            stack
+        }
+    }
+
     private var light: some View {
         let label = game.hasWon ? "YOU WIN! 🎉" : (game.light == .green ? "GO!" : "STOP!")
         let isGreen = game.hasWon || game.light == .green
         return Text(label)
             .font(Theme.rounded(42, weight: .heavy))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
             .foregroundStyle(.white)
-            .frame(maxWidth: 500, minHeight: 160)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: 500, minHeight: isShort ? 80 : 160)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(isGreen ? Theme.green : Theme.red)
@@ -100,8 +128,10 @@ struct RedLightGameView: View {
         return Button(action: tap) {
             Text(label)
                 .font(Theme.rounded(32, weight: .heavy))
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .frame(maxWidth: .infinity)
-                .padding(28)
+                .padding(isShort ? 16 : 28)
         }
         .chunkyButton(fill: Theme.tapButton, cornerRadius: 24, lineWidth: 6)
         .disabled(game.hasWon)

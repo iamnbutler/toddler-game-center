@@ -1,6 +1,6 @@
 # Toddler Game Center
 
-A tiny hub of learning games for toddlers. Native SwiftUI app for **macOS** and **iPadOS**, from a single app target.
+A tiny hub of learning games for toddlers. Native SwiftUI app for **macOS**, **iPadOS**, and **iOS** (iPhone), from a single app target.
 
 Included games:
 - 🐻 **Matching**: flip cards and find pairs.
@@ -10,7 +10,7 @@ Included games:
 
 - Xcode 16 or later (Swift 6)
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
-- Deployment targets: macOS 14, iPadOS 17
+- Deployment targets: macOS 14, iOS/iPadOS 17
 
 ## Run it
 
@@ -21,7 +21,7 @@ xcodegen generate
 open ToddlerGameCenter.xcodeproj
 ```
 
-Pick the **ToddlerGameCenter** scheme, choose **My Mac** or an iPad simulator, and run. Rerun `xcodegen generate` after adding or removing files in `App/`. Files in `GameCenterKit/` are picked up automatically.
+Pick the **ToddlerGameCenter** scheme, choose **My Mac**, an iPad, or an iPhone simulator, and run. Rerun `xcodegen generate` after adding or removing files in `App/`. Files in `GameCenterKit/` are picked up automatically.
 
 Run the game-logic tests without Xcode:
 
@@ -66,7 +66,7 @@ The hub renders a tile for each entry. Each visit to a game gets a fresh view, s
 ## Project layout
 
 ```
-project.yml                      # XcodeGen spec: one app target for macOS + iPadOS
+project.yml                      # XcodeGen spec: one app target for macOS, iPadOS, and iOS
 App/
   ToddlerGameCenterApp.swift     # @main entry point; hosts GameCenterView
 GameCenterKit/                   # Swift package with the games, hub, and tests

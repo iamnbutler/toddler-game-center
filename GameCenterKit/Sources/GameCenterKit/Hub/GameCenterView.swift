@@ -6,6 +6,9 @@ public struct GameCenterView: View {
     private let games: [GameEntry]
     @State private var activeGame: GameEntry?
     @FocusState private var focusedTile: GameEntry.ID?
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     public init(games: [GameEntry] = GameRegistry.games) {
         self.games = games
@@ -35,7 +38,7 @@ public struct GameCenterView: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 16) {
             if let game = activeGame {
                 Button(action: closeGame) {
                     Text("← Back").font(Theme.rounded(22, weight: .semibold)).padding(.horizontal, 20)
@@ -43,23 +46,39 @@ public struct GameCenterView: View {
                 .chunkyButton()
                 .keyboardShortcut(.cancelAction)
                 .accessibilityLabel("Back to all games")
-                Spacer()
-                Text("\(game.emoji) \(game.title)").font(Theme.rounded(28))
-                Spacer()
-                // Balances the Back button so the title stays centered.
-                Color.clear.frame(width: 120, height: 1)
+                if isCompact {
+                    // Narrow screens (iPhone): no room to center, so the title
+                    // sits next to Back and may wrap to two lines.
+                    Text("\(game.emoji) \(game.title)")
+                        .font(Theme.rounded(22))
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Spacer()
+                    Text("\(game.emoji) \(game.title)").font(Theme.rounded(28)).lineLimit(1)
+                    Spacer()
+                    // Balances the Back button so the title stays centered.
+                    Color.clear.frame(width: 120, height: 1)
+                }
             } else {
-                Text("🎉 Toddler Game Center").font(Theme.rounded(28))
+                Text("🎉 Toddler Game Center").font(Theme.rounded(28)).lineLimit(1)
                 Spacer()
             }
         }
-        .lineLimit(1)
         .minimumScaleFactor(0.6)
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
         .frame(minHeight: 92)
         .background(Color.white.ignoresSafeArea(edges: .top))
         .overlay(alignment: .bottom) { Theme.accent.frame(height: 4) }
+    }
+
+    private var isCompact: Bool {
+        #if os(iOS)
+        horizontalSizeClass == .compact
+        #else
+        false
+        #endif
     }
 
     private var hub: some View {
